@@ -5,7 +5,7 @@ Pi skill for searching the web with the Brave Search API and returning compact, 
 ## Install
 
 ```bash
-pi install git@github.com:je-boska/pi-brave-search-skill.git
+pi install git:git@github.com:je-boska/pi-brave-search-skill.git
 ```
 
 Then run `/reload` in Pi if already running.

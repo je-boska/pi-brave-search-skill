@@ -1,0 +1,9 @@
+{
+  "name": "pi-brave-search-skill",
+  "version": "0.1.0",
+  "private": true,
+  "keywords": ["pi-package", "pi-skill", "brave-search"],
+  "pi": {
+    "skills": ["skills"]
+  }
+}
