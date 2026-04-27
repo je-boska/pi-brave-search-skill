@@ -98,9 +98,6 @@ def compact_result(item, idx):
         "source": pick(profile, "name"),
         "hostname": pick(meta_url, "hostname", "netloc"),
         "age": item.get("age"),
-        "pageAge": item.get("page_age"),
-        "language": item.get("language"),
-        "familyFriendly": item.get("family_friendly"),
     }
     extras = {k: v for k, v in extras.items() if v not in (None, "", [], {})}
     if extras:
@@ -108,7 +105,7 @@ def compact_result(item, idx):
 
     snippets = item.get("extra_snippets") or []
     if snippets:
-        out["extraSnippets"] = snippets[:3]
+        out["extraSnippets"] = snippets[:2]
 
     deep = item.get("deep_results") or {}
     buttons = deep.get("buttons") or []
@@ -122,31 +119,20 @@ def compact_result(item, idx):
     return {k: v for k, v in out.items() if v not in (None, "", [], {})}
 
 
-def build_summary(data, args, token_info):
+def build_summary(data, args):
     web = data.get("web") or {}
     results = web.get("results") or []
-    mixed = data.get("mixed") or {}
     query_info = data.get("query") or {}
 
     summary = {
         "query": args.query,
-        "params": {
-            "count": args.count,
-            "offset": args.offset,
-            "country": args.country,
-            "searchLang": args.search_lang,
-            "freshness": args.freshness,
-            "safeSearch": args.safe_search,
-        },
-        "token": token_info,
         "returnedResults": len(results),
         "results": [compact_result(item, i + 1 + args.offset) for i, item in enumerate(results)],
     }
 
-    if query_info:
-        summary["queryInfo"] = query_info
-    if mixed.get("main"):
-        summary["mixedMain"] = mixed.get("main")[:10]
+    corrected = query_info.get("altered") or query_info.get("spellcheck")
+    if corrected:
+        summary["queryCorrection"] = corrected
     if data.get("news", {}).get("results"):
         summary["newsResults"] = [
             compact_result(item, i + 1) for i, item in enumerate(data["news"]["results"][:5])
@@ -179,7 +165,7 @@ def main():
     if args.offset < 0:
         raise SystemExit("--offset must be >= 0")
 
-    api_key, token_info = load_key()
+    api_key, _token_info = load_key()
     if not api_key:
         raise SystemExit(
             "Brave Search API key missing. Set BRAVE_SEARCH_API_KEY or ~/.config/pi/brave-search-token.json"
@@ -200,7 +186,7 @@ def main():
     data, status = request_json(api_key, params)
     RAW_OUT.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
-    summary = build_summary(data, args, token_info)
+    summary = build_summary(data, args)
     SUMMARY_OUT.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n")
 
     if args.raw:
